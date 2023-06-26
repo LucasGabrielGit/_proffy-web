@@ -2,13 +2,12 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import bg from "../resources/bg.svg";
 import "../resources/styles/styles.css";
 import { faEye, faEyeSlash, faHeart } from "@fortawesome/free-solid-svg-icons";
-import { FormEventHandler, useCallback, useState } from "react";
+import { useState } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import * as Yup from "yup";
 import { Formik } from "formik";
 
 import { useNavigate } from "react-router-dom";
-import { stringify } from "querystring";
 
 const schema = Yup.object().shape({
   email: Yup.string()
@@ -18,30 +17,9 @@ const schema = Yup.object().shape({
 });
 
 export const Login = () => {
-  const { signIn } = useAuth();
+  const { signIn, user } = useAuth();
   const [isVisiblePassword, setIsVisiblePassowrd] = useState<boolean>(false);
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const navigate = useNavigate();
-
-  // const handleLogin = useCallback<FormEventHandler<HTMLFormElement>>(
-  //   async (event) => {
-  //     event.preventDefault();
-
-  //     try {
-  //       await signIn({
-  //         email: email,
-  //         password: password,
-  //       });
-
-  //       navigate("/home");
-  //     } catch (err) {
-  //       alert(`Erro inesperado: ${err}`);
-  //       return;
-  //     }
-  //   },
-  //   [signIn, navigate]
-  // );
 
   const handleIsVisiblePass = () => {
     setIsVisiblePassowrd(!isVisiblePassword);
@@ -81,16 +59,9 @@ export const Login = () => {
               alert(`Erro inesperado: ${err}`);
               return;
             }
-            alert(`Logado com sucesso ${JSON.stringify(values)}`);
           }}
         >
-          {({
-            values,
-            setFieldValue,
-            handleBlur,
-            handleChange,
-            handleSubmit,
-          }) => (
+          {({ values, handleChange, handleSubmit }) => (
             <>
               <form
                 className="flex flex-col max-w-xs w-full"
@@ -102,6 +73,7 @@ export const Login = () => {
                     <div className="input-block">
                       <input
                         type="text"
+                        name="email"
                         placeholder="E-mail"
                         className="
                         h-14 border
@@ -111,14 +83,13 @@ export const Login = () => {
                         w-full
                         input-custom"
                         value={values.email}
-                        onChange={(e) => {
-                          setFieldValue("email", e.target.value);
-                        }}
+                        onChange={handleChange}
                       />
                     </div>
                     <div className="input-block">
                       <input
                         id="password"
+                        name="password"
                         type={`${isVisiblePassword ? "text" : "password"}`}
                         placeholder="Senha"
                         className="
@@ -131,9 +102,7 @@ export const Login = () => {
                         outline-none 
                         w-full"
                         value={values.password}
-                        onChange={(e) => {
-                          setFieldValue("password", e.target.value);
-                        }}
+                        onChange={handleChange}
                       />
                       <button
                         className="absolute right-4 top-4"

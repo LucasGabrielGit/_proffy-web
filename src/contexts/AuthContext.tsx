@@ -29,7 +29,7 @@ type AuthContextData = {
   user: User;
   signIn(credentials: SignInCredentials): void;
   signOut(): void;
-  updateUser(user: User): void;
+  isAuthenticated: boolean;
 };
 
 export const AuthContext = createContext<AuthContextData>(
@@ -41,62 +41,46 @@ type PropsAuth = {
 };
 
 const AuthProvider = (props: PropsAuth) => {
-  const [data, setData] = useState<AuthState>(() => {
-    const token = localStorage.getItem("@proffyToken");
-    const user = localStorage.getItem("@proffyUser");
-
-    console.log(user)
-
-    if (token && user && api.defaults.headers.options) {
-      api.defaults.headers.options.Authorization = `Bearer ${token}`;
-
-      return { token, user: JSON.parse(user) };
-    }
-
-    return {} as AuthState;
-  });
-
+  const [user, setUser] = useState<User>({} as User);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const signOut = useCallback(() => {
     localStorage.removeItem("@proffyToken");
-    localStorage.removeItem("@proffyUser");
+    setIsAuthenticated(false);
 
-    setData({} as AuthState);
-  }, []);
+    setUser({} as User);
+  }, [setUser]);
 
-  const signIn = useCallback(async ({ email, password }: SignInCredentials) => {
-    const response = await api.post("login", { email, password });
+  const signIn = useCallback(
+    async ({ email, password }: SignInCredentials) => {
+      const response = await api.post("login", { email, password });
 
-    console.log(response.data);
+      const { token } = response.data;
+      api.defaults.headers.common = { Authorization: `Bearer ${token}` };
+      const userLogged = await api.get(`api/user/${email}`);
 
-    const { token, user } = response.data;
+      if (userLogged) {
+        setUser(userLogged.data as User);
+        setIsAuthenticated(true);
+        console.log(userLogged.data);
+      }
 
-    
+      localStorage.setItem("@proffyToken", token);
 
-    localStorage.setItem("@proffyToken", token);
-    localStorage.setItem("@proffyUser", JSON.stringify(user));
+      if (api.defaults.headers.options) {
+        api.defaults.headers.options.Authorization = `Bearer ${token}`;
+      }
 
-    if (api.defaults.headers.options) {
-      api.defaults.headers.options.Authorization = `Bearer ${token}`;
-    }
-
-    setData({ token, user });
-  }, []);
-
-  const updateUser = useCallback(
-    (user: User) => {
-      localStorage.setItem("@proffyUser", JSON.stringify(user));
-
-      setData({ token: data.token, user });
+      return user;
     },
-    [setData, data.token]
+    [user, setUser]
   );
 
   const values = useMemo(
     () => ({
-      user: data.user,
+      user: user,
       signIn,
       signOut,
-      updateUser,
+      isAuthenticated,
     }),
     []
   );

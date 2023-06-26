@@ -9,11 +9,10 @@ import { RegisterClass } from "./Class/RegisterClass";
 import { TeacherList } from "./Teacher/TeacherList";
 import { TeacherInfo } from "./Teacher/TeacherInfo";
 import { AuthProvider, useAuth } from "../contexts/AuthContext";
+import { PrivateRoute } from "../components/Router/PrivateRoutes";
 
 export const AppRoutes = () => {
-  const { user } = useAuth();
-
-  const isAuthenticated = !!user;
+  const { isAuthenticated } = useAuth();
 
   return (
     <AuthProvider>
@@ -21,14 +20,23 @@ export const AppRoutes = () => {
         <Routes>
           {isAuthenticated ? (
             <>
-              <Route element={<RegisterSuccess />} path="/success" />
-              <Route element={<ForgetPassword />} path="/forget-password" />
-              <Route element={<ResetPasswordSuccess />} path="/reset-success" />
+              <PrivateRoute element={<RegisterSuccess />} path="/success" />
+              <PrivateRoute
+                element={<ForgetPassword />}
+                path="/forget-password"
+              />
+              <PrivateRoute
+                element={<ResetPasswordSuccess />}
+                path="/reset-success"
+              />
 
-              <Route element={<RegisterClass />} path="/register-class" />
-              <Route element={<TeacherList />} path="/teacher-list" />
-              <Route element={<TeacherInfo />} path="/teacher-info" />
-              <Route element={<Home />} path="/home" />
+              <PrivateRoute
+                element={<RegisterClass />}
+                path="/register-class"
+              />
+              <PrivateRoute element={<TeacherList />} path="/teacher-list" />
+              <PrivateRoute element={<TeacherInfo />} path="/teacher-info" />
+              <PrivateRoute element={<Home />} path="/home" />
             </>
           ) : (
             <>

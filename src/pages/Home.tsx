@@ -60,7 +60,7 @@ export const Home = () => {
               height={128}
               className="rounded-full object-cover"
             />
-            <span className="font-semibold text-white">{}</span>
+            <span className="font-semibold text-white">{user.name}</span>
           </div>
           <button
             className="w-auto p-2 rounded-md hover:brightness-150 duration-200"
