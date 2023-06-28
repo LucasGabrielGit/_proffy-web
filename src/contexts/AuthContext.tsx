@@ -1,4 +1,8 @@
 import {
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+} from "firebase/auth";
+import {
   createContext,
   ReactNode,
   useCallback,
@@ -6,18 +10,14 @@ import {
   useMemo,
   useState,
 } from "react";
-import { api } from "../service/api";
+import { auth, firestore } from "../service/firebase";
+import { addDoc, collection, setDoc } from "firebase/firestore";
 
 type User = {
   id: string;
-  name: string;
-  email: string;
-  password: string;
-};
-
-type AuthState = {
-  token: string;
-  user: User;
+  name: string | null;
+  email: string | null;
+  password?: string | null;
 };
 
 type SignInCredentials = {
@@ -25,16 +25,22 @@ type SignInCredentials = {
   password: string;
 };
 
+type SignUpCredentials = {
+  name: string;
+  email: string;
+  password: string;
+};
+
 type AuthContextData = {
-  user: User;
+  user: User | undefined;
   signIn(credentials: SignInCredentials): void;
+  signUp(credentials: SignUpCredentials): void;
+  signInWithGoogle: () => void;
   signOut(): void;
   isAuthenticated: boolean;
 };
 
-export const AuthContext = createContext<AuthContextData>(
-  {} as AuthContextData
-);
+export const AuthContext = createContext({} as AuthContextData);
 
 type PropsAuth = {
   children: ReactNode;
@@ -42,43 +48,54 @@ type PropsAuth = {
 
 const AuthProvider = (props: PropsAuth) => {
   const [user, setUser] = useState<User>({} as User);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const signOut = useCallback(() => {
-    localStorage.removeItem("@proffyToken");
-    setIsAuthenticated(false);
+  const isAuthenticated = !!user;
 
+  const signOut = useCallback(() => {
     setUser({} as User);
   }, [setUser]);
 
+  const signUp = useCallback(
+    async ({ email, name, password }: SignUpCredentials) => {
+      await createUserWithEmailAndPassword(auth, email, password)
+        .then(async (result) => {
+          await addDoc(collection(firestore, "users"), {
+            id: result.user.uid,
+            email: result.user.email,
+            name: name,
+          });
+        })
+        .catch((error) => {
+          console.log(error.message);
+        });
+    },
+    [setDoc]
+  );
+
   const signIn = useCallback(
     async ({ email, password }: SignInCredentials) => {
-      const response = await api.post("login", { email, password });
+      const result = await signInWithEmailAndPassword(auth, email, password);
 
-      const { token } = response.data;
-      api.defaults.headers.common = { Authorization: `Bearer ${token}` };
-      const userLogged = await api.get(`api/user/${email}`);
+      if (result.user) {
+        setUser({
+          id: result.user.uid,
+          name: user.name,
+          email: result.user.email,
+        });
 
-      if (userLogged) {
-        setUser(userLogged.data as User);
-        setIsAuthenticated(true);
-        console.log(userLogged.data);
+        console.log(user);
       }
-
-      localStorage.setItem("@proffyToken", token);
-
-      if (api.defaults.headers.options) {
-        api.defaults.headers.options.Authorization = `Bearer ${token}`;
-      }
-
-      return user;
     },
     [user, setUser]
   );
 
+  const signInWithGoogle = useCallback(() => {}, []);
+
   const values = useMemo(
     () => ({
-      user: user,
+      user,
       signIn,
+      signUp,
+      signInWithGoogle,
       signOut,
       isAuthenticated,
     }),

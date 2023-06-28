@@ -53,10 +53,9 @@ export const Login = () => {
                 email: values.email,
                 password: values.password,
               });
-
-              navigate("/home");
+              alert(`Olá, ${user?.name}`);
             } catch (err) {
-              alert(`Erro inesperado: ${err}`);
+              alert(`Usuário não encontrado`);
               return;
             }
           }}
@@ -151,7 +150,7 @@ export const Login = () => {
                   <div className="flex flex-col">
                     <span>Não tem uma conta?</span>
                     <a
-                      href="http#"
+                      href="/register"
                       className="text-base font-medium leading-6"
                       style={{ color: "#8257E5" }}
                     >

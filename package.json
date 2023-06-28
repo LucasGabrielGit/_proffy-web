@@ -15,7 +15,12 @@
     "@types/react": "^18.2.8",
     "@types/react-dom": "^18.2.4",
     "axios": "^1.4.0",
+    "crypto": "^1.0.1",
+    "crypto-browserify": "^3.12.0",
+    "firebase": "^9.23.0",
     "formik": "^2.4.2",
+    "os-browserify": "^0.3.0",
+    "path": "^0.12.7",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "^6.12.0",
@@ -53,6 +58,8 @@
     ]
   },
   "devDependencies": {
+    "@types/dotenv": "^8.2.0",
+    "dotenv": "^16.3.1",
     "eslint-config-react-app": "^7.0.1",
     "eslint-plugin-react": "^7.32.2",
     "tailwindcss": "^3.3.2"

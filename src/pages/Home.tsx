@@ -5,7 +5,6 @@ import {
   faGraduationCap,
 } from "@fortawesome/free-solid-svg-icons";
 import { MouseEventHandler, useCallback, useEffect, useState } from "react";
-import { api } from "../service/api";
 import profile from "../resources/profile.jpg";
 import illustra from "../resources/Ilustra.svg";
 import { useNavigate } from "react-router-dom";
@@ -32,18 +31,6 @@ export const Home = () => {
     []
   );
 
-  useEffect(() => {
-    api
-      .get("/api/connections")
-      .then((response) => {
-        const { total } = response.data;
-        setConnections(total);
-      })
-      .catch((error) => {
-        console.log({ error: error.message });
-      });
-  }, [connections]);
-
   return (
     <div className="flex flex-col h-screen">
       <div
@@ -60,7 +47,7 @@ export const Home = () => {
               height={128}
               className="rounded-full object-cover"
             />
-            <span className="font-semibold text-white">{user.name}</span>
+            <span className="font-semibold text-white">{user?.name}</span>
           </div>
           <button
             className="w-auto p-2 rounded-md hover:brightness-150 duration-200"
