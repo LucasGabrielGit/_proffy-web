@@ -16,6 +16,8 @@ export const Home = () => {
   const [connections, setConnections] = useState(0);
   const navigate = useNavigate();
 
+  console.log(user)
+
   const handleLogout = useCallback<MouseEventHandler<HTMLButtonElement>>(
     async (e) => {
       e.preventDefault();

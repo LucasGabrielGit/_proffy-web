@@ -40,7 +40,6 @@ export const Register = () => {
                 email: values.email,
                 password: values.password,
               });
-              alert(`Olá, ${values.name}! Seja bem-vindo ao sistema!`);
             } catch (err) {
               alert(`Falha ao criar conta! O endereço de e-mail já existe`);
               return;

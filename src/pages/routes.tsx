@@ -9,41 +9,31 @@ import { RegisterClass } from "./Class/RegisterClass";
 import { TeacherList } from "./Teacher/TeacherList";
 import { TeacherInfo } from "./Teacher/TeacherInfo";
 import { AuthProvider, useAuth } from "../contexts/AuthContext";
-import { PrivateRoute } from "../components/Router/PrivateRoutes";
 
 export const AppRoutes = () => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
 
   return (
     <AuthProvider>
       <BrowserRouter>
         <Routes>
-          {isAuthenticated ? (
-            <>
-              <PrivateRoute element={<RegisterSuccess />} path="/success" />
-              <PrivateRoute
-                element={<ForgetPassword />}
-                path="/forget-password"
-              />
-              <PrivateRoute
-                element={<ResetPasswordSuccess />}
-                path="/reset-success"
-              />
+          {/* {user ? ( */}
+          <>
+            <Route element={<RegisterSuccess />} path="/success" />
+            <Route element={<ResetPasswordSuccess />} path="/reset-success" />
 
-              <PrivateRoute
-                element={<RegisterClass />}
-                path="/register-class"
-              />
-              <PrivateRoute element={<TeacherList />} path="/teacher-list" />
-              <PrivateRoute element={<TeacherInfo />} path="/teacher-info" />
-              <PrivateRoute element={<Home />} path="/home" />
-            </>
-          ) : (
-            <>
-              <Route element={<Login />} path="/" />
-              <Route element={<Register />} path="/register" />
-            </>
-          )}
+            <Route element={<RegisterClass />} path="/register-class" />
+            <Route element={<TeacherList />} path="/teacher-list" />
+            <Route element={<TeacherInfo />} path="/teacher-info" />
+            <Route element={<Home />} path="/home" />
+          </>
+          {/* ) : (
+            <> */}
+          <Route element={<Login />} path="/" />
+          <Route element={<Register />} path="/register" />
+          <Route element={<ForgetPassword />} path="/forget-password" />
+          {/* </>
+          )} */}
         </Routes>
       </BrowserRouter>
     </AuthProvider>
