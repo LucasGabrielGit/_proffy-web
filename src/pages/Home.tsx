@@ -11,19 +11,19 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 
 export const Home = () => {
-  const { signOut, user } = useAuth();
+  const { logOut, user } = useAuth();
 
   const [connections, setConnections] = useState(0);
   const navigate = useNavigate();
 
-  console.log(user)
+  console.log(user);
 
   const handleLogout = useCallback<MouseEventHandler<HTMLButtonElement>>(
     async (e) => {
       e.preventDefault();
 
       try {
-        signOut();
+        await logOut();
 
         navigate("/");
       } catch (err) {

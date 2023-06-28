@@ -8,6 +8,7 @@ import * as Yup from "yup";
 import { Formik } from "formik";
 
 import { useNavigate } from "react-router-dom";
+import { toast } from "react-hot-toast";
 
 const schema = Yup.object().shape({
   email: Yup.string()
@@ -53,7 +54,12 @@ export const Login = () => {
                 email: values.email,
                 password: values.password,
               });
-              alert(`Olá, ${user?.name}`);
+              toast.success(`Olá, ${user?.name}`, {
+                position: "top-right",
+                duration: 4000,
+              });
+
+              navigate("/home");
             } catch (err) {
               alert(`Usuário não encontrado`);
               return;

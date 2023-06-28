@@ -6,12 +6,14 @@ import { faEye, faEyeSlash } from "@fortawesome/free-solid-svg-icons";
 import { useState } from "react";
 import * as Yup from "yup";
 import { Formik } from "formik";
-import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
+import { Toaster } from "react-hot-toast";
+import { useNavigate } from "react-router";
 
 export const Register = () => {
   const [isVisiblePassword, setIsVisiblePassowrd] = useState(false);
-  const { signUp, user } = useAuth();
+  const navigate = useNavigate();
+  const { signUp } = useAuth();
   const handleIsVisiblePass = () => {
     setIsVisiblePassowrd(!isVisiblePassword);
   };
@@ -29,6 +31,7 @@ export const Register = () => {
 
   return (
     <div className="h-screen flex justify-center">
+      <Toaster />
       <div className="flex flex-1 flex-col justify-center items-center">
         <Formik
           initialValues={{ email: "", password: "", name: "" }}
@@ -40,6 +43,8 @@ export const Register = () => {
                 email: values.email,
                 password: values.password,
               });
+
+              navigate("/home");
             } catch (err) {
               alert(`Falha ao criar conta! O endereço de e-mail já existe`);
               return;

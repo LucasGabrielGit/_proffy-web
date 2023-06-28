@@ -3,6 +3,7 @@ import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   signInWithPopup,
+  signOut,
 } from "firebase/auth";
 import {
   createContext,
@@ -23,6 +24,7 @@ import {
   getDocs,
   DocumentData,
 } from "firebase/firestore";
+import { toast } from "react-hot-toast";
 
 type User = {
   id: string;
@@ -48,7 +50,7 @@ type AuthContextData = {
   signIn(credentials: SignInCredentials): void;
   signUp(credentials: SignUpCredentials): void;
   signInWithGoogle: () => void;
-  signOut(): void;
+  logOut: () => void;
   isAuthenticated: boolean;
 };
 
@@ -62,6 +64,7 @@ type PropsAuth = {
 
 const AuthProvider = (props: PropsAuth) => {
   const [user, setUser] = useState<User>();
+  const [isLoading, setIsLoading] = useState(false);
   const isAuthenticated = !!user;
 
   useEffect(() => {
@@ -80,7 +83,6 @@ const AuthProvider = (props: PropsAuth) => {
           const userData = doc.data();
           const mappedUser = mapDocumentToUser(userData);
           setUser(mappedUser);
-          console.log("User" + JSON.stringify(user?.name));
         });
       }
     });
@@ -88,9 +90,13 @@ const AuthProvider = (props: PropsAuth) => {
     return unsubscribe();
   }, []);
 
-  const signOut = useCallback(() => {
-    setUser({} as User);
-  }, [setUser]);
+  const logOut = useCallback(async () => {
+    setIsLoading(true);
+    toast.loading("Carregando...");
+    await signOut(auth).then((res) => {
+      toast.success("Até logo!", { duration: 4000, position: "top-right" });
+    });
+  }, []);
 
   const signUp = useCallback(
     async ({ email, name, password }: SignUpCredentials) => {
@@ -100,9 +106,6 @@ const AuthProvider = (props: PropsAuth) => {
           const q = query(usersRef, where("id", "==", result.user.uid));
           const querySnapshot = await getDocs(q);
           querySnapshot.docs.forEach(async (data) => {
-            if (data.id) {
-              alert("Já existe um usuário cadastrado com esse e-mail!");
-            }
             await addDoc(collection(firestore, "users"), {
               id: result.user.uid,
               email: result.user.email,
@@ -113,7 +116,10 @@ const AuthProvider = (props: PropsAuth) => {
           });
         })
         .catch((error) => {
-          console.log({ ErrorCode: error.code, ErrorMessage: error.message });
+          toast.error("Já existe um usuário vinculado à este e-mail!", {
+            duration: 3000,
+            position: "top-right",
+          });
         });
     },
     [setDoc]
@@ -166,8 +172,9 @@ const AuthProvider = (props: PropsAuth) => {
       signIn,
       signUp,
       signInWithGoogle,
-      signOut,
+      logOut,
       isAuthenticated,
+      toast,
     }),
     [user, signIn, signUp, signInWithGoogle, signOut]
   );
