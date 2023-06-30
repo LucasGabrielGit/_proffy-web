@@ -52,6 +52,7 @@ type AuthContextData = {
   signInWithGoogle: () => void;
   logOut: () => void;
   isAuthenticated: boolean;
+  isLoading: boolean;
 };
 
 export const AuthContext = createContext<AuthContextData>(
@@ -76,18 +77,18 @@ const AuthProvider = (props: PropsAuth) => {
           throw new Error("Faltam algumas informações da conta!");
         }
 
-        const usersRef = collection(firestore, "users");
-        const q = query(usersRef, where("id", "==", currentUser.uid));
-        const querySnapshot = await getDocs(q);
-        querySnapshot.forEach((doc) => {
-          const userData = doc.data();
-          const mappedUser = mapDocumentToUser(userData);
-          setUser(mappedUser);
+        setUser({
+          id: uid,
+          name: displayName,
+          email: email,
+          avatar: photoURL,
         });
       }
     });
 
-    return unsubscribe();
+    return () => {
+      unsubscribe();
+    };
   }, []);
 
   const logOut = useCallback(async () => {
@@ -95,25 +96,33 @@ const AuthProvider = (props: PropsAuth) => {
     toast.loading("Carregando...");
     await signOut(auth).then((res) => {
       toast.success("Até logo!", { duration: 4000, position: "top-right" });
+      setIsLoading(false);
     });
   }, []);
 
   const signUp = useCallback(
     async ({ email, name, password }: SignUpCredentials) => {
+      setIsLoading(true);
       await createUserWithEmailAndPassword(auth, email, password)
         .then(async (result) => {
+          await addDoc(collection(firestore, "users"), {
+            id: result.user.uid,
+            email: result.user.email,
+            name: name,
+          });
           const usersRef = collection(firestore, "users");
           const q = query(usersRef, where("id", "==", result.user.uid));
           const querySnapshot = await getDocs(q);
-          querySnapshot.docs.forEach(async (data) => {
-            await addDoc(collection(firestore, "users"), {
-              id: result.user.uid,
-              email: result.user.email,
-              name: name,
-            }).then((result) => {
-              console.log(result);
-            });
+          querySnapshot.docs.forEach(async (doc) => {
+            const userData = doc.data();
+            const mappedUser = mapDocumentToUser(userData);
+            setUser(mappedUser);
           });
+
+          toast.success("Usuário cadastrado com sucesso!", {
+            position: "top-right",
+          });
+          setIsLoading(false);
         })
         .catch((error) => {
           toast.error("Já existe um usuário vinculado à este e-mail!", {
@@ -132,6 +141,7 @@ const AuthProvider = (props: PropsAuth) => {
 
   const signIn = useCallback(
     async ({ email, password }: SignInCredentials) => {
+      setIsLoading(true);
       const result = await signInWithEmailAndPassword(auth, email, password);
 
       const usersRef = collection(firestore, "users");
@@ -144,26 +154,30 @@ const AuthProvider = (props: PropsAuth) => {
         setUser(mappedUser);
         console.log("User" + userData);
       });
+      setIsLoading(false);
     },
     [user, setUser]
   );
 
   const signInWithGoogle = useCallback(async () => {
     const googleAuthProvider = new GoogleAuthProvider();
+
     const result = await signInWithPopup(auth, googleAuthProvider);
 
-    const { uid, email, displayName, photoURL } = result.user;
+    if (result.user) {
+      const { uid, displayName, email, photoURL } = result.user;
 
-    if (!uid || !photoURL || displayName) {
-      throw new Error("Faltam algumas informações da conta!");
+      if (!displayName || !photoURL) {
+        throw new Error("Ooops, algo de errado não está certo");
+      }
+
+      setUser({
+        id: uid,
+        email: email,
+        name: displayName,
+        avatar: photoURL,
+      });
     }
-
-    setUser({
-      id: uid,
-      email: email,
-      name: displayName,
-      avatar: photoURL,
-    });
   }, [user, setUser]);
 
   const values = useMemo(
@@ -175,8 +189,9 @@ const AuthProvider = (props: PropsAuth) => {
       logOut,
       isAuthenticated,
       toast,
+      isLoading,
     }),
-    [user, signIn, signUp, signInWithGoogle, signOut]
+    [user, signIn, signUp, signInWithGoogle, signOut, isLoading]
   );
 
   return (

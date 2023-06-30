@@ -43,8 +43,6 @@ export const Register = () => {
                 email: values.email,
                 password: values.password,
               });
-
-              navigate("/home");
             } catch (err) {
               alert(`Falha ao criar conta! O endereço de e-mail já existe`);
               return;
@@ -56,7 +54,11 @@ export const Register = () => {
               className="flex flex-col max-w-xs w-full relative"
               onSubmit={handleSubmit}
             >
-              <button className="absolute -top-20 left-0">
+              <button
+                className="absolute -top-20 left-0"
+                type="button"
+                onClick={() => navigate("/")}
+              >
                 <img src={backBtn} alt="Voltar" />
               </button>
               <div className="flex flex-col gap-10 mb-8">

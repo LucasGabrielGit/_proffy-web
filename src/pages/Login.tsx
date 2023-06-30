@@ -6,6 +6,7 @@ import { useState } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import * as Yup from "yup";
 import { Formik } from "formik";
+import googleIcon from "../resources/google-icon.svg";
 
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-hot-toast";
@@ -18,9 +19,20 @@ const schema = Yup.object().shape({
 });
 
 export const Login = () => {
-  const { signIn, user } = useAuth();
+  const { signIn, user, signInWithGoogle, isLoading } = useAuth();
   const [isVisiblePassword, setIsVisiblePassowrd] = useState<boolean>(false);
   const navigate = useNavigate();
+
+  const handleSignIn = async () => {
+    if (isLoading) {
+      toast.loading("Entrando...", {
+        position: "top-right",
+      });
+    }
+    if (!user) {
+      await signInWithGoogle();
+    }
+  };
 
   const handleIsVisiblePass = () => {
     setIsVisiblePassowrd(!isVisiblePassword);
@@ -118,7 +130,7 @@ export const Login = () => {
                           }
                           handleIsVisiblePass();
                         }}
-                        type="submit"
+                        type="button"
                       >
                         <FontAwesomeIcon
                           icon={isVisiblePassword ? faEyeSlash : faEye}
@@ -148,9 +160,23 @@ export const Login = () => {
                     </div>
                   </div>
 
-                  <button className="w-full bg-green-500 h-14 rounded-lg text-white flex items-center justify-center hover:bg-opacity-80 transition-all duration-200 text-xl">
-                    Entrar
-                  </button>
+                  <div className="flex flex-col items-center">
+                    <button
+                      className="w-full bg-green-500 h-14 rounded-lg text-white flex items-center justify-center hover:bg-opacity-80 transition-all duration-200 text-xl"
+                      type="submit"
+                    >
+                      Entrar
+                    </button>
+                    ou
+                    <button
+                      className="w-full bg-zinc-100 h-14 rounded-lg text-teal-900 flex items-center justify-center hover:bg-opacity-80 transition-all duration-200 text-xl gap-2"
+                      type="button"
+                      onClick={handleSignIn}
+                    >
+                      <img src={googleIcon} alt="Google" width={28} />
+                      Entrar com o Google
+                    </button>
+                  </div>
                 </div>
                 <div className="flex items-start justify-between">
                   <div className="flex flex-col">
