@@ -1,8 +1,6 @@
 import {
-  GoogleAuthProvider,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
-  signInWithPopup,
   signOut,
 } from "firebase/auth";
 import {
@@ -29,7 +27,7 @@ import { toast } from "react-hot-toast";
 type User = {
   id: string;
   name: string | null;
-  avatar?: string | null;
+  avatar?: string | undefined;
   email: string | null;
   password?: string | null;
 };
@@ -47,10 +45,9 @@ type SignUpCredentials = {
 
 type AuthContextData = {
   user: User | undefined;
-  signIn(credentials: SignInCredentials): void;
-  signUp(credentials: SignUpCredentials): void;
-  signInWithGoogle: () => void;
-  logOut: () => void;
+  signIn(credentials: SignInCredentials): Promise<void>;
+  signUp(credentials: SignUpCredentials): Promise<void>;
+  logOut(): void;
   isAuthenticated: boolean;
   isLoading: boolean;
 };
@@ -69,11 +66,11 @@ const AuthProvider = (props: PropsAuth) => {
   const isAuthenticated = !!user;
 
   useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged(async (currentUser) => {
+    const unsubscribe = auth.onAuthStateChanged((currentUser) => {
       if (currentUser) {
         const { uid, email, displayName, photoURL } = currentUser;
 
-        if (!uid) {
+        if (!displayName || !photoURL) {
           throw new Error("Faltam algumas informações da conta!");
         }
 
@@ -92,12 +89,16 @@ const AuthProvider = (props: PropsAuth) => {
   }, []);
 
   const logOut = useCallback(async () => {
-    setIsLoading(true);
-    toast.loading("Carregando...");
-    await signOut(auth).then((res) => {
-      toast.success("Até logo!", { duration: 4000, position: "top-right" });
-      setIsLoading(false);
-    });
+    try {
+      setIsLoading(true);
+      await signOut(auth).then(() => setIsLoading(false));
+    } catch (error) {
+      toast.error("Erro ao fazer logout.", {
+        duration: 4000,
+        position: "top-right",
+      });
+      console.log("Erro ao fazer logout:", error);
+    }
   }, []);
 
   const signUp = useCallback(
@@ -113,7 +114,7 @@ const AuthProvider = (props: PropsAuth) => {
           const usersRef = collection(firestore, "users");
           const q = query(usersRef, where("id", "==", result.user.uid));
           const querySnapshot = await getDocs(q);
-          querySnapshot.docs.forEach(async (doc) => {
+          querySnapshot.docs.forEach((doc) => {
             const userData = doc.data();
             const mappedUser = mapDocumentToUser(userData);
             setUser(mappedUser);
@@ -141,7 +142,6 @@ const AuthProvider = (props: PropsAuth) => {
 
   const signIn = useCallback(
     async ({ email, password }: SignInCredentials) => {
-      setIsLoading(true);
       const result = await signInWithEmailAndPassword(auth, email, password);
 
       const usersRef = collection(firestore, "users");
@@ -152,46 +152,22 @@ const AuthProvider = (props: PropsAuth) => {
         const userData = doc.data();
         const mappedUser = mapDocumentToUser(userData);
         setUser(mappedUser);
-        console.log("User" + userData);
       });
-      setIsLoading(false);
     },
     [user, setUser]
   );
-
-  const signInWithGoogle = useCallback(async () => {
-    const googleAuthProvider = new GoogleAuthProvider();
-
-    const result = await signInWithPopup(auth, googleAuthProvider);
-
-    if (result.user) {
-      const { uid, displayName, email, photoURL } = result.user;
-
-      if (!displayName || !photoURL) {
-        throw new Error("Ooops, algo de errado não está certo");
-      }
-
-      setUser({
-        id: uid,
-        email: email,
-        name: displayName,
-        avatar: photoURL,
-      });
-    }
-  }, [user, setUser]);
 
   const values = useMemo(
     () => ({
       user: user,
       signIn,
       signUp,
-      signInWithGoogle,
       logOut,
       isAuthenticated,
       toast,
-      isLoading,
+      isLoading: isLoading,
     }),
-    [user, signIn, signUp, signInWithGoogle, signOut, isLoading]
+    [user, signIn, signUp, signOut, isLoading]
   );
 
   return (
